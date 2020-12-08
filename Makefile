@@ -1,16 +1,37 @@
-compiler = avr-gcc
-obj_copy = avr-objcopy
-flash_tool = avrdude
-
 target = blink
 
-# Output format (can be srec, ihex, binary)
+# Compiler and linker params
+compiler = avr-gcc
+
+## Macros
+cpu_speed = F_CPU=8000000
+
+macros = -D$(cpu_speed)
+
+optimize = s
+
+compiler_flags = -O$(optimize)
+
+# Object copy params
+obj_copy = avr-objcopy
+## Output format (can be srec, ihex, binary)
 format = ihex
 
-programmer = stk500v1
+# Flash tool params
+flash_tool = avrdude
+
+partno = t85
+baudrate = 19200
+programmer-id = stk500v1
+port = /dev/ttyUSB0
+
+avrdude_flags = -p $(partno)
+avrdude_flags += -b $(baudrate)
+avrdude_flags += -c $(programmer-id)
+avrdude_flags += -P $(port)
 
 all:
-	$(compiler) -Os -DF_CPU=8000000 -mmcu=attiny85 -c blink.c
-	$(compiler) -DF_CPU=8000000 -mmcu=attiny85 -o $(target).elf blink.o
+	$(compiler) $(compiler_flags) $(macros) -mmcu=attiny85 -c blink.c
+	$(compiler) $(macros) -mmcu=attiny85 -o $(target).elf blink.o
 	$(obj_copy) -O $(format) $(target).elf $(target).hex
-	$(flash_tool) -c $(programmer) -p attiny85 -P /dev/ttyUSB0 -b 19200 -U flash:w:$(target).hex
+	$(flash_tool) $(avrdude_flags) -U flash:w:$(target).hex
